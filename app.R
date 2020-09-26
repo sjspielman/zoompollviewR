@@ -25,7 +25,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
           tabsetPanel(
             tabPanel(id = "upload", "Upload poll results",
                      br(),br(),
-            fileInput("zoom_results_csv", "Upload your Zoom Poll CSV file. This file should be exactly what you exported from the Zoom website.",
+            fileInput("zoom_results_csv", "Upload your Zoom Poll CSV file. This file should be exactly what you exported from the Zoom website. Currently we only can accept NON-ANONYMOUS SINGLE polls with registered users. Being able to process reports containing MULTIPLE polls is a forthcoming feature.",
                       accept = c(".csv"), # only the zoom poll output, it's a .csv
                       width = "1000px"
                     ),
