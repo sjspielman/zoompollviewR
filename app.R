@@ -13,27 +13,29 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
   
   # Application title
   titlePanel("zoompollviewR: View your Zoom poll results"),
+  br(),
   p("Written by", a("Stephanie J. Spielman, Ph.D.",href="https://spielmanlab.github.io"), "and released under GPL-3 License. Source code:", 
     a("https://github.com/sjspielman/zoompollviewR",href="https://github.com/sjspielman/zoompollviewR")),
   p("Work in progress! Please report bugs and/or request features on the", a("Github Issues Page.",href="https://github.com/sjspielman/zoompollviewR/issues")),
-  
-  
-  sidebarLayout(
-    sidebarPanel(width = 3,
-           fileInput("zoom_results_csv", "Upload your Zoom Poll CSV file.",
-                 accept = c(".csv") # only the zoom poll output, it's a .csv
-           ),
-           helpText("This file should be exactly what you exported from the Zoom website."),
-           numericInput("num_questions", "How many questions are in your poll?", min = 1, max = 50, value = 1),
-           actionButton("go", "Process Zoom Poll!")
-           
-    ),
+  br(),br(),
+ 
     
     
-    mainPanel(width = 9,
+    mainPanel(width = 12,
           tabsetPanel(
+            tabPanel(id = "upload", "Upload poll results",
+                     br(),br(),
+            fileInput("zoom_results_csv", "Upload your Zoom Poll CSV file. This file should be exactly what you exported from the Zoom website.",
+                      accept = c(".csv"), # only the zoom poll output, it's a .csv
+                      width = "1000px"
+                    ),
+            numericInput("num_questions", "How many questions are in your poll?", min = 1, max = 50, value = 1),
+            br(),br(),
+            helpText("See other tabs for poll results after you click below."),
+            actionButton("go", "Process Zoom Poll!"),
+            ),
             tabPanel(id = "full", "Full results", 
-                 
+                 br(),
                  h3("Poll questions"),
                  tableOutput("questions"),
                  br(),br(),
@@ -57,13 +59,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                 br(),br(),
                 h3("Poll questions:"),
                 tableOutput("questions2")
-            )
-          )
-    )
-  )
-  
-  
-)
+            ) # tabpanel
+          ) #tabsetpanel
+    ) # mainpanel
+ ) # fluid
 
 server <- function(input, output) {
 
@@ -122,7 +121,13 @@ server <- function(input, output) {
   output$questions <-  renderTable(  processed_df()$questions, colnames=FALSE  )
   output$questions1 <-  renderTable(  processed_df()$questions, colnames=FALSE  )
   output$questions2 <-  renderTable(  processed_df()$questions, colnames=FALSE  )
-  output$full_answer_table <- DT::renderDataTable(  processed_df()$answers  )
+ 
+  output$full_answer_table <- DT::renderDataTable(server=FALSE, 
+                                                  rownames = FALSE, 
+                                                  extensions = 'Buttons', 
+                                                  options = list(dom = 'Bp', 
+                                                                 buttons = c('copy', 'excel')),
+                                                  {processed_df()$answers})
   
   
   output$select_student <- renderUI({
@@ -133,9 +138,13 @@ server <- function(input, output) {
           selected=processed_df()$student_names[1])
   })
   
-  output$single_student_view <- DT::renderDataTable({
-    
-    processed_df()$answers %>%
+  output$single_student_view <- DT::renderDataTable(
+      server=FALSE, 
+      rownames = FALSE, 
+      extensions = 'Buttons', 
+      options = list(dom = 'Bp', 
+                     buttons = c('copy', 'excel')),
+      {processed_df()$answers %>%
       dplyr::filter(`Student name` == input$selected_student) %>%
       tidyr::pivot_longer(-c(`Student name`),
                 names_to = "q", 
@@ -145,8 +154,13 @@ server <- function(input, output) {
   })
   
   
-  output$question_view <- DT::renderDataTable(rownames = FALSE, {
-    processed_df()$tallied_answers %>%
+  output$question_view <- DT::renderDataTable(
+      server=FALSE, 
+      rownames = FALSE, 
+      extensions = 'Buttons', 
+      options = list(dom = 'Bp', 
+                     buttons = c('copy', 'excel')),
+      {processed_df()$tallied_answers %>%
         dplyr::rename("Number of answers"= n,
                       "Percent of answers" = percent,
                       "Question" = name, 
